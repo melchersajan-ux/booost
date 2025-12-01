@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Market Activation Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #4285F4;
+            --secondary: #34A853;
+            --accent: #EA4335;
+            --light: #f8f9fa;
+            --dark: #343a40;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        
+        .dashboard-container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        
+        .navbar {
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 15px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 1.5rem;
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .sidebar {
+            background-color: white;
+            width: 250px;
+            padding: 20px 0;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+            height: calc(100vh - 70px);
+            position: fixed;
+            overflow-y: auto;
+            z-index: 99;
+        }
+        
+        .content-area {
+            flex: 1;
+            padding: 20px;
+            margin-left: 250px;
+            width: calc(100% - 250px);
+            overflow-y: auto;
+        }
+        
+        .sidebar .nav-link {
+            color: var(--dark);
+            padding: 12px 20px;
+            margin: 5px 0;
+            border-radius: 8px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+        }
+        
+        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .sidebar .nav-link i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .card {
+            border-radius: 12px;
+            border: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            transition: transform 0.3s;
+            overflow: hidden;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid #e0e0e0;
+            font-weight: 600;
+            padding: 15px 20px;
+            border-radius: 12px 12px 0 0 !important;
+        }
+        
+        .stat-card {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+        
+        .stat-card .label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .table-responsive {
+            overflow-x: auto;
+        }
+        
+        .table th {
+            background-color: var(--light);
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        
+        .form-section {
+            background-color: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        
+        .form-control, .form-select {
+            border-radius: 8px;
+            padding: 10px 15px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-weight: 600;
+        }
+        
+        .btn-primary:hover {
+            background-color: #3367d6;
+        }
+        
+        .location-badge {
+            background-color: #e8f0fe;
+            color: var(--primary);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            display: inline-block;
+            margin-right: 5px;
+            margin-bottom: 5px;
+            white-space: nowrap;
+        }
+        
+        .dashboard-section {
+            margin-bottom: 30px;
+        }
+        
+        .section-title {
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .stylist-code {
+            font-family: monospace;
+            background-color: #f1f3f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--primary);
+        }
+        
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 98;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 992px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                z-index: 101;
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .content-area {
+                margin-left: 0;
+                width: 100%;
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            .sidebar-overlay.active {
+                display: block;
+            }
+            
+            .table th, .table td {
+                padding: 8px 10px;
+                font-size: 0.9rem;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .content-area {
+                padding: 15px;
+            }
+            
+            .form-section {
+                padding: 20px;
+            }
+            
+            .stat-card .value {
+                font-size: 1.5rem;
+            }
+            
+            .card-header {
+                padding: 12px 15px;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .content-area {
+                padding: 10px;
+            }
+            
+            .form-section {
+                padding: 15px;
+            }
+            
+            .table-responsive {
+                font-size: 0.85rem;
+            }
+            
+            .btn {
+                padding: 8px 16px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Navigation -->
+        <nav class="navbar">
+            <div class="container-fluid">
+                <button class="mobile-menu-btn" id="mobileMenuBtn">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <a class="navbar-brand" href="#">
+                    <i class="fas fa-braille text-primary me-2"></i>
+                    Market Activation System
+                </a>
+                <div class="d-flex">
+                    <a class="nav-link" href="#"><i class="fas fa-user-circle"></i> Admin User</a>
+                </div>
+            </div>
+        </nav>
+
+        <div class="main-content">
+            <!-- Sidebar -->
+            <div class="sidebar" id="sidebar">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#dashboard">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#register-stylist">
+                            <i class="fas fa-user-plus"></i> Register Stylist
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#braiding-form">
+                            <i class="fas fa-cut"></i> Braiding Form
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#stylists">
+                            <i class="fas fa-users"></i> Stylists
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#payments">
+                            <i class="fas fa-money-bill-wave"></i> Payments
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#reports">
+                            <i class="fas fa-chart-bar"></i> Reports
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#settings">
+                            <i class="fas fa-cog"></i> Settings
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Sidebar overlay for mobile -->
+            <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+            <!-- Content Area -->
+            <div class="content-area">
+                <!-- Dashboard Section -->
+                <div id="dashboard" class="dashboard-section">
+                    <h2 class="section-title">Management Dashboard</h2>
+                    
+                    <!-- Stats Cards -->
+                    <div class="row g-3">
+                        <div class="col-md-3 col-sm-6">
+                            <div class="card stat-card">
+                                <div class="card-body">
+                                    <i class="fas fa-users fa-2x text-primary"></i>
+                                    <div class="value">265</div>
+                                    <div class="label">Stylists Registered</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <div class="card stat-card">
+                                <div class="card-body">
+                                    <i class="fas fa-cut fa-2x text-success"></i>
+                                    <div class="value">9,608</div>
+                                    <div class="label">Braiding Completed</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <div class="card stat-card">
+                                <div class="card-body">
+                                    <i class="fas fa-money-bill-wave fa-2x text-warning"></i>
+                                    <div class="value">₦48.04M</div>
+                                    <div class="label">Total Payment</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <div class="card stat-card">
+                                <div class="card-body">
+                                    <i class="fas fa-clock fa-2x text-danger"></i>
+                                    <div class="value">₦3.83M</div>
+                                    <div class="label">Payment Pending</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Location Summary Table -->
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <i class="fas fa-map-marker-alt me-2"></i> Location Summary
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Location</th>
+                                            <th>Stylists Registered</th>
+                                            <th>Braiding Completed</th>
+                                            <th>No. of Days</th>
+                                            <th>Total Payment</th>
+                                            <th>Payment Done</th>
+                                            <th>Payment Pending</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Oja Oba Market Akure</td>
+                                            <td>40</td>
+                                            <td>1,232</td>
+                                            <td>13</td>
+                                            <td>₦6,160,000</td>
+                                            <td>₦5,010,000</td>
+                                            <td>₦1,150,000</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Ondo Market</td>
+                                            <td>38</td>
+                                            <td>3,400</td>
+                                            <td>13</td>
+                                            <td>₦17,000,000</td>
+                                            <td>₦16,250,000</td>
+                                            <td>₦750,000</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Oja Oba Market, Ado - Ekiti</td>
+                                            <td>56</td>
+                                            <td>1,356</td>
+                                            <td>12</td>
+                                            <td>₦6,780,000</td>
+                                            <td>₦6,130,000</td>
+                                            <td>₦650,000</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Oja Tuntun, Ilorin</td>
+                                            <td>66</td>
+                                            <td>2,322</td>
+                                            <td>14</td>
+                                            <td>₦11,610,000</td>
+                                            <td>₦10,985,000</td>
+                                            <td>₦625,000</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Orisunbare Market, Osogbo</td>
+                                            <td>65</td>
+                                            <td>1,298</td>
+                                            <td>13</td>
+                                            <td>₦6,490,000</td>
+                                            <td>₦5,840,000</td>
+                                            <td>₦650,000</td>
+                                        </tr>
+                                        <tr class="table-active fw-bold">
+                                            <td>Total</td>
+                                            <td>265</td>
+                                            <td>9,608</td>
+                                            <td></td>
+                                            <td>₦48,040,000</td>
+                                            <td>₦44,215,000</td>
+                                            <td>₦3,825,000</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Charts -->
+                    <div class="row mt-4 g-3">
+                        <div class="col-lg-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <i class="fas fa-chart-pie me-2"></i> Braiding Distribution by Location
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="locationChart" height="250"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <i class="fas fa-chart-line me-2"></i> Daily Braiding Progress
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="dailyChart" height="250"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Register Stylist Form -->
+                <div id="register-stylist" class="form-section" style="display: none;">
+                    <h2 class="section-title">Register Stylist</h2>
+                    <p class="text-muted mb-4">Register stylist with their basic details and assign a unique code</p>
+                    
+                    <form id="stylistForm">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="stylistName" class="form-label">Stylist Name</label>
+                                    <input type="text" class="form-control" id="stylistName" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="stylistPhone" class="form-label">Stylist Phone Number</label>
+                                    <input type="tel" class="form-control" id="stylistPhone" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="location" class="form-label">Location</label>
+                                    <select class="form-select" id="location" required>
+                                        <option value="">Choose Location</option>
+                                        <option value="A">Oja Oba Market Akure</option>
+                                        <option value="B">Ondo Market</option>
+                                        <option value="C">Oja Oba Market, Ado - Ekiti</option>
+                                        <option value="D">Oja Tuntun, Ilorin</option>
+                                        <option value="E">Orisunbare Market, Osogbo</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="stylistCode" class="form-label">Stylist Code</label>
+                                    <input type="text" class="form-control" id="stylistCode" readonly>
+                                    <div class="form-text">Automatically generated based on location</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="bankName" class="form-label">Bank Name</label>
+                                    <input type="text" class="form-control" id="bankName" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="accountNumber" class="form-label">Bank Account Number</label>
+                                    <input type="text" class="form-control" id="accountNumber" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="consentCheck" required>
+                            <label class="form-check-label" for="consentCheck">I confirm that all information provided is accurate</label>
+                        </div>
+                        
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button type="submit" class="btn btn-primary">Register Stylist</button>
+                            <button type="reset" class="btn btn-outline-secondary">Clear Form</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Other sections would go here -->
+                <div id="braiding-form" class="form-section" style="display: none;">
+                    <h2 class="section-title">Braiding Completion Form</h2>
+                    <p class="text-muted">This section would contain the braiding completion form</p>
+                </div>
+                
+                <div id="stylists" class="dashboard-section" style="display: none;">
+                    <h2 class="section-title">Registered Stylists</h2>
+                    <p class="text-muted">This section would display all registered stylists</p>
+                </div>
+                
+                <div id="payments" class="dashboard-section" style="display: none;">
+                    <h2 class="section-title">Payment Tracking</h2>
+                    <p class="text-muted">This section would show payment details</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Mobile menu functionality
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        
+        mobileMenuBtn.addEventListener('click', function() {
+            sidebar.classList.toggle('active');
+            sidebarOverlay.classList.toggle('active');
+        });
+        
+        sidebarOverlay.addEventListener('click', function() {
+            sidebar.classList.remove('active');
+            sidebarOverlay.classList.remove('active');
+        });
+        
+        // Navigation functionality
+        document.querySelectorAll('.sidebar .nav-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Close mobile menu if open
+                if (window.innerWidth <= 992) {
+                    sidebar.classList.remove('active');
+                    sidebarOverlay.classList.remove('active');
+                }
+                
+                // Remove active class from all links
+                document.querySelectorAll('.sidebar .nav-link').forEach(l => l.classList.remove('active'));
+                
+                // Add active class to clicked link
+                this.classList.add('active');
+                
+                // Hide all sections
+                document.querySelectorAll('.dashboard-section, .form-section').forEach(section => {
+                    section.style.display = 'none';
+                });
+                
+                // Show the selected section
+                const targetId = this.getAttribute('href').substring(1);
+                document.getElementById(targetId).style.display = 'block';
+            });
+        });
+        
+        // Show dashboard by default
+        document.getElementById('dashboard').style.display = 'block';
+        
+        // Generate stylist code based on location
+        document.getElementById('location').addEventListener('change', function() {
+            const locationCode = this.value;
+            if (locationCode) {
+                // In a real app, this would fetch the next available code from the database
+                const nextCode = '001'; // This would be dynamic
+                document.getElementById('stylistCode').value = locationCode + nextCode;
+            } else {
+                document.getElementById('stylistCode').value = '';
+            }
+        });
+        
+        // Form submission handlers
+        document.getElementById('stylistForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('Stylist registered successfully!');
+            this.reset();
+            document.getElementById('stylistCode').value = '';
+        });
+        
+        // Charts
+        const locationChart = new Chart(document.getElementById('locationChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Oja Oba Market Akure', 'Ondo Market', 'Oja Oba Market, Ado - Ekiti', 'Oja Tuntun, Ilorin', 'Orisunbare Market, Osogbo'],
+                datasets: [{
+                    data: [1232, 3400, 1356, 2322, 1298],
+                    backgroundColor: [
+                        '#4285F4',
+                        '#34A853',
+                        '#FBBC05',
+                        '#EA4335',
+                        '#8E44AD'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Braiding Distribution'
+                    }
+                }
+            }
+        });
+        
+        const dailyChart = new Chart(document.getElementById('dailyChart'), {
+            type: 'line',
+            data: {
+                labels: ['1 Dec', '2 Dec', '3 Dec', '4 Dec', '5 Dec', '6 Dec', '7 Dec', '8 Dec', '9 Dec', '10 Dec', '11 Dec', '12 Dec', '13 Dec', '14 Dec', '15 Dec'],
+                datasets: [{
+                    label: 'Daily Braiding',
+                    data: [672, 722, 688, 663, 682, 681, 732, 726, 682, 710, 724, 691, 700, 722, 716],
+                    borderColor: '#4285F4',
+                    backgroundColor: 'rgba(66, 133, 244, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Daily Braiding Progress'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        title: {
+                            display: true,
+                            text: 'Number of Braidings'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            locationChart.resize();
+            dailyChart.resize();
+        });
+    </script>
+</body>
+</html>
