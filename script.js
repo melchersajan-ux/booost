@@ -83,7 +83,7 @@ function uploadFiles() {
                 name: file.name,
                 type: file.type,
                 data: e.target.result,
-                uploadDate: new Date().toLocaleDateString(),
+                uploadDate: "",
                 description: '',
                 isLink: false
             };
